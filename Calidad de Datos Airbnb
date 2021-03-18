@@ -1,0 +1,290 @@
+Dataset
+Columnas del dataset:
+
+id - Identificador de la publicación
+name - Nombre de la publicación
+host_id - Identificador del usuario que hizo la publicación
+host_name - Nombre del usuario que hizo la publicación
+neighbourhood_group - Región geográfica de la ciudad
+neighbourhood - Barrio
+latitude - Latitud
+longitude - Longitud
+room_type - Tipo de habitación
+price - Precio en dólares
+minimum_nights - Mínima cantidad de noches
+number_of_reviews - Cantidad de revisiones
+last_review - Fecha de la última revisión
+reviews_per_month - Cantidad promedio de revisiones por mes
+calculated_host_listings_count - Cantidad de publicaciones estimadas del usuario
+availability_365 -
+Se pide
+Cargar el dataset con los datos de AirBnB disponibles para los hospedajes de NYC.
+Inspeccionar los vacios en el dataset:
+Verificar el tipo de datos de cada columna luego de cargada
+Contar la cantidad de vacíos, ceros y valores especiales por columna
+Indicar qué columnas tienen vacíos y como se podrían reparar
+Modificar las columnas con los datos corregidos
+Inspeccionar el campo de precio:
+Verificar valores extraños en la columna precio
+Modificar la columna de precio con los valores corregidos
+Generar un reporte gráfico con los precios por barrios/zonas de la ciudad.
+Generar una visualización gráfica de los precios
+Generar estadísticas por barrio, precio máximo, mínimo, promedio, mediano
+Generar estadísticas por grupos de barrios, precio máximo, mínimo, promedio, mediano
+¿Cuál es la completitud de los datos que pudo utilizar para las últimas dos partes? ¿Puede mejorarla de alguna manera?
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from IPython.core.interactiveshell import InteractiveShell
+InteractiveShell.ast_node_interactivity = "all"
+
+#importación de la base  AirBnB2clean a dataframe
+
+df=pd.read_csv("C:/Users/david/OneDrive/Documentos/Idatha - CS y ML/Trabajo Final de Curso/ConjuntosDeDatos/AirBnB2clean.csv")
+
+#df=df.sort_values(by='last_review',ascending=True)
+df.head(6)
+
+## Inspeccionar los Vacíos en el dataset
+
+#### 2.A Verificar el tipo de datos de cada columna luego de cargada
+
+
+df.dtypes
+
+df.columns
+df.describe()
+
+df.info()
+
+#### 2.B Contar la cantidad de Vacíos, ceros y valores especiales por columna. 
+
+import string
+alphabet = string.ascii_letters+string.punctuation
+
+df.isnull().sum()
+
+df.neighbourhood_group.str.strip(alphabet).astype(bool).any()
+
+
+df.name.str.strip(alphabet).astype(bool).any()
+
+df['name'].apply(type).value_counts()
+
+df['host_name'].apply(type).value_counts()
+df['last_review'].apply(type).value_counts()
+df['reviews_per_month'].apply(type).value_counts()
+df['reviews_per_month'].apply(type).value_counts()
+
+
+## Analisis 
+(df['name'].values =='-').sum()
+(df['host_name'].values =='-').sum()
+(df['neighbourhood_group'].values =='-').sum()
+y=(df['neighbourhood'].values =='-').sum()
+print('Cantidad del caracter especial "-" que existen en la columna neighbourhood:','',y)
+
+(df['room_type'].values =='-').sum()
+(df['price'].values =='-').sum()
+
+(df['last_review'].values == "NaN").sum()
+
+
+## Falta contar los faltans de last reiew y erviews per month que refieren a NaN
+
+#### 2.C Indicar qué columnas tienen vacíos y como se podrían reparar
+
+**Las columanas que tienen vacíos son: "name","hostmane", "Last Review" y "Reviews per month"**
+
+**Para las columnas numericas (precios), se los puede reemplazar estadísticamente con el promedio según el el ti
+
+
+#### Se las puedes reparar reemplzando los valores por el promedio de las columnas
+## Revisar estas respuestas
+
+#### 2.D Modificar las columnas con los datos corregidos
+
+df1=df
+### Se corrigen las distintas formas como se escriben los barrios que existen en el dataframe
+
+df1['neighbourhood_group']=df1['neighbourhood_group'].str.title() ## Se vuelve miníscula a todos los grupos
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['Broklyn/Ny','Broo.'],'Brooklyn')
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['Manh.'],'Manhattan')
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['Queens/Nyc'],'Queens')
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['Manhattan/Ny'],'Manhattan')
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['Manhatan'],'Manhattan')
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['Staten Isl.'],'Staten Island')
+df1['neighbourhood_group'] = df1['neighbourhood_group'].replace(['St. Isl.'],'Staten Island')
+
+
+df1.head(10)
+
+
+df_temp=df1.groupby(['neighbourhood_group','neighbourhood','last_review'],as_index=False)['reviews_per_month'].mean()
+df_temp.head(10)
+
+### Consolido la forma de los nombres de neighbourhood_group 
+
+df1.groupby(['neighbourhood_group'],as_index=False)['reviews_per_month'].mean()
+
+## 3 Inspeccionar el campo de precio:
+#### 3.A Verificar valores extraños en la columna precio
+
+
+df['price'].apply(type).value_counts()
+
+#### 3.B Modificar la columna de precio con los valores corregidos
+
+
+df2=df1
+df2["price"]= df2["price"].str.replace("$", "") 
+df2["price"]= df2["price"].str.replace("Dollars", "") 
+df2["price"]= df2["price"].str.replace("USD", "")
+#df2['neighbourhood_group']=df2['neighbourhood_group'].str.title() ## Convierto los neighbourhood_group de mayuscula a minuscula para homogeneizar la columna
+df2['price'] = pd.to_numeric(df['price'],errors='coerce') ## Convierto de str a numeric
+
+df2.tail(10)
+
+
+sns.heatmap(df2.corr(), annot = True, fmt='.1g')
+
+
+df_temp=df1.groupby(['neighbourhood_group','neighbourhood','last_review'],as_index=False)['reviews_per_month'].mean()
+df_temp.head(10)
+
+df1.groupby(['neighbourhood_group'],as_index=False)['reviews_per_month'].mean()
+
+## Reemplazo los reviews_per_month faltantes por le promerdio de reviews_per_month segun el neighbourhood_group
+#df2=df1
+df2['reviews_per_month'] = np.where( (df2['neighbourhood_group']=='Brooklyn') & (df2['reviews_per_month'].isnull()) , 1.283212, df2['reviews_per_month']  )
+df2['reviews_per_month'] = np.where( (df2['neighbourhood_group']=='Manhattan') & (df2['reviews_per_month'].isnull()) , 1.272131, df2['reviews_per_month']  )
+df2['reviews_per_month'] = np.where( (df2['neighbourhood_group']=='Queens') & (df2['reviews_per_month'].isnull()) , 1.941200, df2['reviews_per_month']  )
+df2['reviews_per_month'] = np.where( (df2['neighbourhood_group']=='Staten Island') & (df2['reviews_per_month'].isnull()) , 1.872580, df2['reviews_per_month']  )
+df2['reviews_per_month'] = np.where( (df2['neighbourhood_group']=='Bronx') & (df2['reviews_per_month'].isnull()) , 1.837831, df2['reviews_per_month']  )
+
+df2.tail(10)
+
+df2.isnull().sum()
+
+
+
+#df1["neighbourhood"]= df1["neighbourhood"].str.replace("-", "NO DATA") 
+#df1.head()
+
+
+
+## 4.Generar un reporte gráfico con los precios por barrios/zonas de la ciudad.
+#### 4.A Generar una visualización gráfica de los precios
+
+
+import seaborn as sns
+
+#df1.plot(x="last_review", y=["price"])
+#sns.displot(df2, x="price", binwidth=3)
+#plt.show()
+plt.figure(figsize=(9, 8))
+sns.distplot(df2['price'], color='b', bins=500, hist_kws={'alpha': 0.4})
+sns.kdeplot(df2.price[df2.neighbourhood_group=='Manhattan'], label='Manhattan', shade=True)
+sns.kdeplot(df2.price[df2.neighbourhood_group=='Queens'], label='Queens', shade=True)
+sns.kdeplot(df2.price[df2.neighbourhood_group=='Staten Island'], label='Staten Island', shade=True)
+sns.kdeplot(df2.price[df2.neighbourhood_group=='Brooklyn'], label='Brooklyn', shade=True)
+sns.kdeplot(df2.price[df2.neighbourhood_group=='Bronx'], label='Bronx', shade=True)
+plt.xlabel('price')
+
+
+#### 4.B Generar estadísticas por barrio, precio máximo, mínimo, promedio, mediano
+
+
+## falta revelar los null para la columna precios
+df2["neighbourhood"]= df2["neighbourhood"].str.replace(", Staten Island", "")
+
+
+df_neig=df2.groupby(['neighbourhood'],as_index=False)['price'].mean()
+df_neig
+df_neig.describe()
+
+#### 4.C Generar estadísticas por grupos de barrios, precio máximo, mínimo, promedio, mediano
+
+
+df_neig_g=df2.groupby(['neighbourhood_group'],as_index=False)['price'].mean()
+df_neig_g.head()
+df_neig_g.describe()
+
+#### 4.D ¿Cuál es la completitud de los datos que pudo utilizar para las últimas dos partes? ¿Puede mejorarla de alguna manera?
+
+##### Para aquellas celdas vacias de la columna precio (1951 en total), se puede llenar con los valores estadísticos de precio según el grupo y/o vecindario. Por lo tanto si se puede completar los datos de acuerdo al promedio de precios según el grupo y el barrio.
+
+df2['price'] = np.where( (df2['neighbourhood_group']=='Bronx') & (df2['neighbourhood'].isnull()) & (df2['price'].isnull()) , 87.242884, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood_group']=='Brooklyn') & (df2['neighbourhood'].isnull()) & (df2['price'].isnull()) , 124.550150, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood_group']=='Manhattan') & (df2['neighbourhood'].isnull()) & (df2['price'].isnull()) , 196.659531, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood_group']=='Queens') & (df2['neighbourhood'].isnull()) & (df2['price'].isnull()) , 98.045916, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood_group']=='Staten Island') & (df2['neighbourhood'].isnull()) & (df2['price'].isnull()) , 116.775281, df2['price'] )
+
+
+df2.isnull().sum()
+
+df2.tail()
+
+df2['price'] = np.where( (df2['neighbourhood']=='Allerton') & (df2['price'].isnull()) , 89.818182, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Arden Heights') & (df2['price'].isnull()) , 66.333333, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Arrocha') & (df2['price'].isnull()) , 142.785714, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Arverne') & (df2['price'].isnull()) , 174.653846, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Astoria') & (df2['price'].isnull()) , 106.012085, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bath Beach') & (df2['price'].isnull()) , 72.846154, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Battery Park City') & (df2['price'].isnull()) , 432.940000, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bay Ridge') & (df2['price'].isnull()) , 118.933333, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bay Terrace') & (df2['price'].isnull()) , 132.600000, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bayswater') & (df2['price'].isnull()) , 93.519231, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bayside') & (df2['price'].isnull()) , 197.000000, df2['price'] )
+#df2['price'] = np.where( (df2['neighbourhood']=='Bayswater') & (df2['price'].isnull()) , 65.750000, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bedford-Stuyvesant') & (df2['price'].isnull()) , 106.287857, df2['price'] )
+
+
+
+df_neig.head(20)
+
+#### Se disminuyó de 1951 a 1806 de celdas vacías en la columna precios.
+
+df2.isnull().sum()
+
+df2.groupby(['neighbourhood'],as_index=False)['price'].count()
+
+df2[df2['price'].isnull()].groupby(['neighbourhood'],as_index=False)['price'].apply(lambda grp: grp.nlargest(3).count())
+
+df_price_zero=df2.query('price.isnull()', engine='python')
+df_price_zero.head()
+
+
+## Reemplazo los NaN de la columna price por unos para luego hacer una sumatoria segun el vecindario.
+df_price_zero_bool = df_price_zero.replace(np.nan,1) ## Esto me ayudará para sumar las celdas vacías.
+df_price_zero_bool=df_price_zero_bool.groupby(['neighbourhood','price'],as_index=False)['price'].count()
+## Tomo los barrios con mayores celdas vacias que refieren a la suma de price
+
+df_price_zero_bool.nlargest(10,'price')
+
+## Teniendo ya los vecindarios sin valores de prices, me dedico a reemplazar las celdas vacías por la media actual.
+df_neig[120:140]
+
+
+## Luego de buscar celda por celda del Dataframe de df_neig, reemplazo la media de los vecindarios por aquellas celdas vacias en la columna de precios
+df2['price'] = np.where( (df2['neighbourhood']=='Williamsburg') & (df2['price'].isnull()) , 143.449270, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Bushwick') & (df2['price'].isnull()) , 85.659255, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Upper West Side') & (df2['price'].isnull()) , 215.175536, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Harlem') & (df2['price'].isnull()) , 117.445827, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='East Village') & (df2['price'].isnull()) , 185.732196, df2['price'] )
+df2['price'] = np.where( (df2['neighbourhood']=='Midtown') & (df2['price'].isnull()) , 274.871245, df2['price'] )
+
+#### En primera instancia tenia 1951 celdas de la columna precios en NaN, abajo se muestran 1358. Se puede seguir llenando las celdas de la columna precios con el resto de medias según el vencindario para así disminuir las celdas en blanco.
+
+
+df2.isnull().sum()
+
+df2.isnull().sum().nlargest(3)
+
+
+df2.isnull().sum(axis=1).nlargest(4)
+
